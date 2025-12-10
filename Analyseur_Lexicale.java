@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package com.mycompany.analyseur_lexicale;
 
 import java.io.BufferedReader;
@@ -10,10 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author 7390
- */
 class Token {
     String valeur;
     String type;
@@ -25,7 +17,6 @@ class Token {
         erreur = e;
     }
     
-    // NOUVELLES LIGNES AJOUTÉES ICI
     public String getValeur() { return valeur; }
     public String getType() { return type; }
     public boolean estErreur() { return erreur; }
@@ -35,33 +26,32 @@ class Token {
             return "ERREUR LEXICALE : " + valeur;
         else
             return valeur + " : " + type;
-    }}
+    }
+}
+
 public class Analyseur_Lexicale {
-   
     
     private static final String[] MOTS_CLES = {
-        "abstract","array","as","break","callable","case","catch","class","clone",
-    "const","continue","declare","default","die","do","echo","else","elseif","empty",
-    "enddeclare","endfor","endforeach","endif","endswitch","endwhile","eval","exit",
-    "extends","final","finally","for","foreach","function","global","goto","if",
-    "implements","include","include_once","instanceof","insteadof","interface",
-    "isset","list","namespace","new","print","private","protected","public",
-    "require","require_once","return","static","switch","throw","trait","try","unset",
-    "use","var","while","yield","true","false","Sarah","Hocina","A4"
+        "False", "None", "True", "and", "as", "assert", "async", "await",
+        "break", "class", "continue", "def", "del", "elif", "else", "except",
+        "finally", "for", "from", "global", "if", "import", "in", "is",
+        "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+        "with", "while", "yield", "print", "foreach", "range"
     };
 
-    private static final String[] OPERATEURS_MOTS = {"and", "not", "and"};
+    private static final String[] OPERATEURS_MOTS = {"and", "or", "not", "is", "in"};
 
     private static final String[] OPERATEURS = {
-        "===","!==","<<<","==","!=","<=",">=","++","--","&&","||",".=","->","::","**","??",
-        ">>>=","<<<=","+","-","*","/","%","=","<",">","!","&","|","^","."
+        "//=", "**=", "==", "!=", "<=", ">=", "+=", "-=", "*=", "/=", "%=",
+        "<<", ">>", "//", "**", "+", "-", "*", "/", "%", "=", "<", ">",
+        "&", "|", "^", "~", "@"
     };
 
-    private static final char[] SEPARATEURS = {'(',')','{','}','[',']',';',','};
+    private static final char[] SEPARATEURS = {'(', ')', '{', '}', '[', ']', ',', ':', '.', ';'};
 
     enum Etat {
-        DEBUT, IDENTIFIANT, NOMBRE, CHAINE, CARACTERE, OPERATEUR,
-        COMMENTAIRE_LIGNE, COMMENTAIRE_BLOC
+        DEBUT, IDENTIFIANT, NOMBRE, CHAINE, CARACTERE,
+        COMMENTAIRE_LIGNE
     }
 
     private static boolean estLettre(char c) {
@@ -84,7 +74,7 @@ public class Analyseur_Lexicale {
     }
 
     private static boolean estDebutOperateur(char c) {
-        char[] ops = {'+','-','*','/','%','=','<','>','!','&','|','^','.'};
+        char[] ops = {'+', '-', '*', '/', '%', '=', '<', '>', '!', '&', '|', '^', '~', '@'};
         for (int i = 0; i < ops.length; i++) {
             if (ops[i] == c) return true;
         }
@@ -113,17 +103,16 @@ public class Analyseur_Lexicale {
         return true;
     }
 
-    private static boolean commenceParDollar(String s) {
+    private static boolean estIdentificateurValide(String s) {
         if (s == null || s.isEmpty()) return false;
-    char first = s.charAt(0);
-    if (!Character.isLetter(first) && first != '_') return false; // premier caractère
-
-    // les autres caractères
-    for (int i = 1; i < s.length(); i++) {
-        char c = s.charAt(i);
-        if (!Character.isLetterOrDigit(c) && c != '_') return false;
-    }
-    return true;
+        char first = s.charAt(0);
+        if (!Character.isLetter(first) && first != '_') return false;
+        
+        for (int i = 1; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (!Character.isLetterOrDigit(c) && c != '_') return false;
+        }
+        return true;
     }
 
     private static String lireOperateur(String text, int index) {
@@ -144,11 +133,10 @@ public class Analyseur_Lexicale {
     }
 
     public static List<Token> analyserFichier(String fichierPath) throws IOException {
-
         BufferedReader br = new BufferedReader(new FileReader(fichierPath));
         StringBuilder sb = new StringBuilder();
         int c;
-        while ((c = br.read()) != -1) sb.append((char)c);
+        while ((c = br.read()) != -1) sb.append((char) c);
         br.close();
 
         String text = sb.toString();
@@ -161,36 +149,21 @@ public class Analyseur_Lexicale {
 
             switch (etat) {
                 case DEBUT:
-                    
-                   
-                   if (estLettre(ch) || ch == '_') {
+                    if (estLettre(ch) || ch == '_') {
                         token = "" + ch;
                         etat = Etat.IDENTIFIANT;
-                    }
-                    else if (estChiffre(ch)) {
+                    } else if (estChiffre(ch)) {
                         token = "" + ch;
                         etat = Etat.NOMBRE;
-                    }
-                    else if (ch == '"') {
+                    } else if (ch == '"') {
                         token = "" + ch;
                         etat = Etat.CHAINE;
-                    }
-                    else if (ch == '\'') {
+                    } else if (ch == '\'') {
                         token = "" + ch;
                         etat = Etat.CARACTERE;
-                    }
-                    else if (ch == '/' && i + 1 < text.length() && text.charAt(i + 1) == '/') {
+                    } else if (ch == '#') {
                         etat = Etat.COMMENTAIRE_LIGNE;
-                        i++;
-                    }
-                    else if (ch == '/' && i + 1 < text.length() && text.charAt(i + 1) == '*') {
-                        etat = Etat.COMMENTAIRE_BLOC;
-                        i++;
-                    }
-                    else if (ch == '#') {
-                        etat = Etat.COMMENTAIRE_LIGNE;
-                    }
-                    else if (estDebutOperateur(ch)) {
+                    } else if (estDebutOperateur(ch)) {
                         String op = lireOperateur(text, i);
                         if (op != null) {
                             tokens.add(new Token(op, "OPERATEUR", false));
@@ -198,11 +171,9 @@ public class Analyseur_Lexicale {
                         } else {
                             tokens.add(new Token("" + ch, "OPERATEUR", false));
                         }
-                    }
-                    else if (estSeparateur(ch)) {
+                    } else if (estSeparateur(ch)) {
                         tokens.add(new Token("" + ch, "SEPARATEUR", false));
-                    }
-                    else if (!estEspace(ch)) {
+                    } else if (!estEspace(ch)) {
                         tokens.add(new Token("" + ch, "ERREUR", true));
                     }
                     break;
@@ -211,55 +182,33 @@ public class Analyseur_Lexicale {
                     if (estLettre(ch) || estChiffre(ch) || ch == '_') {
                         token += ch;
                     } else {
-                        // Traiter le token accumulé
                         if (estMotCle(token)) {
-    tokens.add(new Token(token, "MOT_CLE", false));
-} 
-else if (estOperateurMot(token)) {
-    tokens.add(new Token(token, "OPERATEUR", false));
-} 
-else if (commenceParDollar(token)) {
-    tokens.add(new Token(token, "IDENTIFIANT", false));
-} 
-else {
-    tokens.add(new Token(token, "ERREUR", true));
-}
+                            tokens.add(new Token(token, "MOT_CLE", false));
+                        } else if (estOperateurMot(token)) {
+                            tokens.add(new Token(token, "OPERATEUR", false));
+                        } else if (estIdentificateurValide(token)) {
+                            tokens.add(new Token(token, "IDENTIFICATEUR", false));
+                        } else {
+                            tokens.add(new Token(token, "ERREUR", true));
+                        }
                         token = "";
                         etat = Etat.DEBUT;
 
-                        // Traiter le caractère actuel dans l'état DEBUT
-                        if (ch == '-') {
+                        if (estLettre(ch) || ch == '_') {
                             token = "" + ch;
                             etat = Etat.IDENTIFIANT;
-                        }
-                        else if (estLettre(ch) || ch == '_') {
-                            token = "" + ch;
-                            etat = Etat.IDENTIFIANT;
-                        }
-                        else if (estChiffre(ch)) {
+                        } else if (estChiffre(ch)) {
                             token = "" + ch;
                             etat = Etat.NOMBRE;
-                        }
-                        else if (ch == '"') {
+                        } else if (ch == '"') {
                             token = "" + ch;
                             etat = Etat.CHAINE;
-                        }
-                        else if (ch == '\'') {
+                        } else if (ch == '\'') {
                             token = "" + ch;
                             etat = Etat.CARACTERE;
-                        }
-                        else if (ch == '/' && i + 1 < text.length() && text.charAt(i + 1) == '/') {
+                        } else if (ch == '#') {
                             etat = Etat.COMMENTAIRE_LIGNE;
-                            i++;
-                        }
-                        else if (ch == '/' && i + 1 < text.length() && text.charAt(i + 1) == '*') {
-                            etat = Etat.COMMENTAIRE_BLOC;
-                            i++;
-                        }
-                        else if (ch == '#') {
-                            etat = Etat.COMMENTAIRE_LIGNE;
-                        }
-                        else if (estDebutOperateur(ch)) {
+                        } else if (estDebutOperateur(ch)) {
                             String op = lireOperateur(text, i);
                             if (op != null) {
                                 tokens.add(new Token(op, "OPERATEUR", false));
@@ -267,57 +216,38 @@ else {
                             } else {
                                 tokens.add(new Token("" + ch, "OPERATEUR", false));
                             }
-                        }
-                        else if (estSeparateur(ch)) {
+                        } else if (estSeparateur(ch)) {
                             tokens.add(new Token("" + ch, "SEPARATEUR", false));
-                        }
-                        else if (!estEspace(ch)) {
+                        } else if (!estEspace(ch)) {
                             tokens.add(new Token("" + ch, "ERREUR", true));
                         }
                     }
                     break;
 
                 case NOMBRE:
-                    if (estChiffre(ch) || ch == '.' || ch == 'e' || ch == 'E' || ch == '+' || ch == '-' || ch == 'x' || ch == 'b') {
+                    if (estChiffre(ch) || ch == '.' || ch == 'e' || ch == 'E' ||
+                            ch == '+' || ch == '-' || ch == 'x' || ch == 'b' || ch == 'o') {
                         token += ch;
                     } else {
                         tokens.add(new Token(token, "NOMBRE", false));
                         token = "";
                         etat = Etat.DEBUT;
 
-                        // Traiter le caractère actuel
-                        if (ch == '$') {
+                        if (estLettre(ch) || ch == '_') {
                             token = "" + ch;
                             etat = Etat.IDENTIFIANT;
-                        }
-                        else if (estLettre(ch) || ch == '_') {
-                            token = "" + ch;
-                            etat = Etat.IDENTIFIANT;
-                        }
-                        else if (estChiffre(ch)) {
+                        } else if (estChiffre(ch)) {
                             token = "" + ch;
                             etat = Etat.NOMBRE;
-                        }
-                        else if (ch == '"') {
+                        } else if (ch == '"') {
                             token = "" + ch;
                             etat = Etat.CHAINE;
-                        }
-                        else if (ch == '\'') {
+                        } else if (ch == '\'') {
                             token = "" + ch;
                             etat = Etat.CARACTERE;
-                        }
-                        else if (ch == '/' && i + 1 < text.length() && text.charAt(i + 1) == '/') {
+                        } else if (ch == '#') {
                             etat = Etat.COMMENTAIRE_LIGNE;
-                            i++;
-                        }
-                        else if (ch == '/' && i + 1 < text.length() && text.charAt(i + 1) == '*') {
-                            etat = Etat.COMMENTAIRE_BLOC;
-                            i++;
-                        }
-                        else if (ch == '#') {
-                            etat = Etat.COMMENTAIRE_LIGNE;
-                        }
-                        else if (estDebutOperateur(ch)) {
+                        } else if (estDebutOperateur(ch)) {
                             String op = lireOperateur(text, i);
                             if (op != null) {
                                 tokens.add(new Token(op, "OPERATEUR", false));
@@ -325,11 +255,9 @@ else {
                             } else {
                                 tokens.add(new Token("" + ch, "OPERATEUR", false));
                             }
-                        }
-                        else if (estSeparateur(ch)) {
+                        } else if (estSeparateur(ch)) {
                             tokens.add(new Token("" + ch, "SEPARATEUR", false));
-                        }
-                        else if (!estEspace(ch)) {
+                        } else if (!estEspace(ch)) {
                             tokens.add(new Token("" + ch, "ERREUR", true));
                         }
                     }
@@ -356,25 +284,17 @@ else {
                 case COMMENTAIRE_LIGNE:
                     if (ch == '\n') etat = Etat.DEBUT;
                     break;
-
-                case COMMENTAIRE_BLOC:
-                    if (ch == '*' && i + 1 < text.length() && text.charAt(i + 1) == '/') {
-                        etat = Etat.DEBUT;
-                        i++;
-                    }
-                    break;
             }
         }
 
-        // Traiter le token restant
         if (token.length() > 0) {
             if (etat == Etat.IDENTIFIANT) {
-                if (commenceParDollar(token)) {
-                    tokens.add(new Token(token, "IDENTIFICATEUR", false));
+                if (estMotCle(token)) {
+                    tokens.add(new Token(token, "MOT_CLE", false));
                 } else if (estOperateurMot(token)) {
                     tokens.add(new Token(token, "OPERATEUR", false));
-                } else if (estMotCle(token)) {
-                    tokens.add(new Token(token, "MOT_CLE", false));
+                } else if (estIdentificateurValide(token)) {
+                    tokens.add(new Token(token, "IDENTIFICATEUR", false));
                 } else {
                     tokens.add(new Token(token, "ERREUR", true));
                 }
@@ -391,24 +311,40 @@ else {
     }
 
     public static void main(String[] args) throws IOException {
-  
        String fichierPath = "test.py";
-    
-    // 1. Analyse lexicale
-    System.out.println("      ANALYSE LEXICALE    ");
-    List<Token> tokens = analyserFichier(fichierPath);
-    for (Token t : tokens) 
-        System.out.println(t);
-    
-    // 2. Analyse syntaxique
-    System.out.println("        ANALYSE SYNTAXIQUE      ");
-    AnalyseurSyntaxique parser = new AnalyseurSyntaxique(tokens);
-    try {
+        
+       
+        // 1. Analyse lexicale
+        System.out.println(" ANALYSE LEXICALE ");
+        List<Token> tokens = analyserFichier(fichierPath);
+        
+        int erreurLexicales = 0;
+        for (Token t : tokens) {
+            System.out.println(t);
+            if (t.estErreur()) {
+                erreurLexicales++;
+            }
+        }
+        
+        if (erreurLexicales > 0) {
+            System.out.println("\n " + erreurLexicales + " erreur(s) lexicale(s)");
+        } else {
+            System.out.println("\n Aucune erreur lexicale");
+        }
+        
+        // 2. Analyse syntaxique
+        AnalyseurSyntaxique parser = new AnalyseurSyntaxique(tokens);
         parser.analyser();
-    } catch (Exception e) {
-        System.err.println(" Erreur: " + e.getMessage());
+        
+        // Resume
+        System.out.println("\n RESUME FINAL ");
+        if (erreurLexicales == 0 && !parser.aDesErreurs()) {
+            System.out.println(" CODE VALIDE");
+        } else {
+            System.out.println(" CODE AVEC ERREURS ");
+            System.out.println("  Erreurs lexicales : " + erreurLexicales);
+            System.out.println("  Erreurs syntaxiques : " + parser.getErreurs().size());
+        }
+
     }
-}}
-
-
-    
+}
